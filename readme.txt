@@ -35,3 +35,8 @@ Go to the "eBay Shop Page" admin page, enter your App ID, Seller name, and Selec
 1, 2, 3: You're done!
 
 
+== Screenshots ==
+
+1. Shop Page with products.
+2. Widget panel in the WordPress admin.
+3. Settings page for eBay Shop Page plugin.
