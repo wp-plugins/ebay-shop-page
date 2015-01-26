@@ -178,12 +178,16 @@ class Ebay_app {
 		// if(!empty($_REQUEST['filter'])) 
 		$posted=$_REQUEST;
 		if(!empty($posted['brand'])) $brand=$posted['brand'];
-		if(!empty($posted['rcat'])) $cat=$posted['rcat'];
 		if(!empty($posted['category'])) $cat=$posted['category']; else $cat='';
 		if(!empty($posted['size'])) $sizes=$posted['size']; else $sizes='';
 		if(!empty($posted['price-range-min'])) $price_min=$posted['price-range-min']; else $price_min='';
 		if(!empty($posted['price-range-max'])) $price_max=$posted['price-range-max']; else $price_max='';
-		if(!empty($posted['rpage'])) $page =$posted['rpage']; else $page = 1;
+		
+		// GET VARS
+		if(!empty($posted['rcat'])) $cat=$posted['rcat'];
+		if(!empty($posted['price_min'])) $price_min=$posted['price_min'];
+		if(!empty($posted['price_max'])) $price_max=$posted['price_max'];
+		if(!empty($posted['rpage'])) $page=$posted['rpage']; else $page = 1;
 		$app_per_page=get_option( 'WD_ESP_APP_PER_PAGE' );
 		if(!empty($app_per_page)) $per_page=$app_per_page; else $per_page = 20;
 		
@@ -262,7 +266,7 @@ class Ebay_app {
 			$q=$_SERVER['QUERY_STRING']; // get page query 
 			$app_page_id=get_option( 'WD_ESP_APP_PAGE' );
 		
-			$page_query = site_url('?page_id='.$app_page_id).'brand='.$brand.'&size='.$sizes.'&price_min='.$price_min.'&price_max='.$price_max.'&rcat='.$cat;
+			$page_query = site_url('?page_id='.$app_page_id).'&brand='.$brand.'&size='.$sizes.'&price_min='.$price_min.'&price_max='.$price_max.'&rcat='.$cat;
 			
 			$pagination = '<div class="wd-esc-pagination">';
 				$pagination .= '<ul>'
@@ -343,7 +347,17 @@ class Ebay_app {
 		); 
 		
 		// Get POST data
-		$posted=array(); if(!empty($_POST['filter'])) $posted=$_POST;
+		$posted=array(); 
+		// if(!empty($_POST['filter'])) 
+		$posted=$_REQUEST;
+		if(!empty($posted['price-range-min'])) $price_min=$posted['price-range-min']; else $price_min='';
+		if(!empty($posted['price-range-max'])) $price_max=$posted['price-range-max']; else $price_max='';
+		if(!empty($posted['category'])) $rcat=$posted['category']; else $rcat='';
+		// GET VARS
+		if(!empty($posted['rcat'])) $rcat=$posted['rcat'];
+		if(!empty($posted['price_min'])) $price_min=$posted['price_min'];
+		if(!empty($posted['price_max'])) $price_max=$posted['price_max'];
+		
 		
 		$search_form = '';
 		
@@ -354,12 +368,12 @@ class Ebay_app {
 			<br>
 			<label>Brands</label>
 			<br><br>
-			<input type="text" name="brand" placeholder="Brands" '.(isset($posted['brand'])?' value="'.$posted['brand'].'" ':'').'/>
+			<input type="text" name="brand" placeholder="Brands" '.(!empty($posted['brand'])?' value="'.$posted['brand'].'" ':'').'/>
 			<br><br>
 			<select name="category">
 				<option value="">Select Category</option>';
 				if($categories) foreach($categories as $key => $cat) 
-					$search_form .= '<option value="'.$cat->CategoryID.'" '.(isset($posted['category']) && $posted['category']==$cat->CategoryID?' selected="selected" ':'').'>'.$cat->CategoryName.'</option>';
+					$search_form .= '<option value="'.$cat->CategoryID.'" '.($rcat==$cat->CategoryID?' selected="selected" ':'').'>'.$cat->CategoryName.'</option>';
 			$search_form .= '</select>
 			<br><br>
 			<select name="size">
@@ -371,12 +385,12 @@ class Ebay_app {
 			<select name="price-range-min">
 				<option value="">Min Price</option>';
 				if($price_ranges) foreach($price_ranges as $key => $price) 
-					$search_form .= '<option value="'.$key.'" '.(isset($posted['price-range-min']) && $posted['price-range-min']==$key?' selected="selected" ':'').'>$'.$price.'</option>';
+					$search_form .= '<option value="'.$key.'" '.($price_min==$key?' selected="selected" ':'').'>$'.$price.'</option>';
 			$search_form .= '</select>
 			<select name="price-range-max">
 				<option value="">Max Price</option>';
 				if($price_ranges) foreach($price_ranges as $key => $price)
-					$search_form .= '<option value="'.$key.'" '.(isset($posted['price-range-max']) && $posted['price-range-max']==$key?' selected="selected" ':'').'>$'.$price.'</option>';
+					$search_form .= '<option value="'.$key.'" '.($price_max==$key?' selected="selected" ':'').'>$'.$price.'</option>';
 			$search_form .= '</select>
 			<br><br>
 			<input type="hidden" name="filter" value="1" />
