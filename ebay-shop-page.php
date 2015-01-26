@@ -1,15 +1,15 @@
 <?php
 /*
 Plugin Name: eBay Shop Page
-Plugin URI: http://www.pierrestudios.com/plugin_sites/ebay-shop-page/
+Plugin URI: http://ebay-shop.webdevstudio.net/
 Description: Allows you to add a Shop page on your WordPress website to list products form a selected eBay seller or shop.
-Version: 1.0
+Version: 2.0
 Author: Web Dev Studio
-Author URI: http://www.pierrestudios.com/plugin_sites/
+Author URI: http://webdevstudio.net/
 License: GPLv2 or later
 */
 
-/*  Copyright 2014  Web Dev Studio  (email : webdev@pierrestudios.com)
+/*  Copyright 2014  Web Dev Studio  (email : webdevsolutionsstudio@gmail.com)
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -31,9 +31,9 @@ License: GPLv2 or later
 /**** Sets up Plugin configuration and routing based on names of Plugin folder and files. ***/
 
 // define Plugin constants
-define( 'WD_ESP_VERSION', "1.0");			
+define( 'WD_ESP_VERSION', "2.0");			
 define( 'WD_ESP_PURGE_DATA', '1' );		
-define( 'WP_ADMIN_PATH', ABSPATH . 'wp-admin/');  
+define( 'WD_ESP_ADMIN_PATH', ABSPATH . 'wp-admin/');  
 define( 'WD_ESP_FILE', basename(__FILE__) );
 define( 'WD_ESP_FILE_PATH', __FILE__);
 define( 'WD_ESP_NAME', basename(__FILE__, ".php") );

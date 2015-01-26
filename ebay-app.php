@@ -121,6 +121,23 @@ class Ebay_app {
     font-size: 0.76em;
     line-height: 2em;
 }
+.wd-esc-pagination {
+    clear: both;
+}
+.wd-esc-pagination ul {
+    list-style: none;
+}
+.wd-esc-pagination li {
+    display: inline;
+	margin: 5px;
+}
+.wd-esc-pagination li.current {
+    padding: 5px 10px;
+}
+.wd-esc-pagination li a {
+    padding: 5px 10px;
+	text-decoration: none;
+}
 @media (max-width: 1240px) {
 	.gallery-grid {
 	    left: -74px;
@@ -157,12 +174,20 @@ class Ebay_app {
 	
 	function show_gallery($seller='', $brand='', $per_page=12) {
 	
-		$posted=array(); if($_POST['filter']) $posted=$_POST;
-		if($posted['brand']) $brand=$posted['brand'];
-		if($posted['category']) $cat=$posted['category']; else $cat='';
-		if($posted['size']) $sizes=$posted['size']; else $sizes='';
-		if($posted['price-range-min']) $price_min=$posted['price-range-min']; else $price_min='';
-		if($posted['price-range-max']) $price_max=$posted['price-range-max']; else $price_max='';
+		$posted=array(); 
+		// if(!empty($_REQUEST['filter'])) 
+		$posted=$_REQUEST;
+		if(!empty($posted['brand'])) $brand=$posted['brand'];
+		if(!empty($posted['rcat'])) $cat=$posted['rcat'];
+		if(!empty($posted['category'])) $cat=$posted['category']; else $cat='';
+		if(!empty($posted['size'])) $sizes=$posted['size']; else $sizes='';
+		if(!empty($posted['price-range-min'])) $price_min=$posted['price-range-min']; else $price_min='';
+		if(!empty($posted['price-range-max'])) $price_max=$posted['price-range-max']; else $price_max='';
+		if(!empty($posted['rpage'])) $page =$posted['rpage']; else $page = 1;
+		$app_per_page=get_option( 'WD_ESP_APP_PER_PAGE' );
+		if(!empty($app_per_page)) $per_page=$app_per_page; else $per_page = 20;
+		
+		// var_dump($posted);
 		
 		$endpoint = 'http://svcs.ebay.com/services/search/FindingService/v1'; 
 		/*** SELLERS ****/
@@ -202,9 +227,14 @@ class Ebay_app {
 		  	</itemFilter>";
 			if($cat) $xmlrequest .= "<categoryId>$cat</categoryId>";
 		
-		  $xmlrequest .= "<paginationInput>
-		    <entriesPerPage>$per_page</entriesPerPage>
-		  </paginationInput>
+			// per page
+			$xmlrequest .= "<paginationInput>
+		    	<pageNumber>$page</pageNumber>
+		    	<entriesPerPage>$per_page</entriesPerPage>
+		  	</paginationInput>";
+			//  ["paginationOutput"]=> object(SimpleXMLElement)#227 (4) { ["pageNumber"]=> string(1) "1" ["entriesPerPage"]=> string(2) "12" ["totalPages"]=> string(3) "156" ["totalEntries"]=> string(4) "1864" } ["itemSearchURL"]=> string(111) "http://www.ebay.com/sch/93427/i.html?_sasl=karmaloop&_saslop=1&_fss=1&LH_SpecificSeller=1&_ddo=1&_ipg=12&_pgn=1" }
+ 		
+		  $xmlrequest .= "
 		</findItemsAdvanced>";
 		$session  = curl_init($endpoint);                 
 		curl_setopt($session, CURLOPT_POST, true);           
@@ -214,11 +244,42 @@ class Ebay_app {
 		$responsexml = curl_exec($session);                    
 		curl_close($session); 
 		$xml = simplexml_load_string($responsexml);
-		
+		// echo 'count '.var_dump($xml);
+		//  ["paginationOutput"]=> object(SimpleXMLElement)#227 (4) { ["pageNumber"]=> string(1) "1" ["entriesPerPage"]=> string(2) "12" ["totalPages"]=> string(3) "156" ["totalEntries"]=> string(4) "1864" } ["itemSearchURL"]=> string(111) "http://www.ebay.com/sch/93427/i.html?_sasl=karmaloop&_saslop=1&_fss=1&LH_SpecificSeller=1&_ddo=1&_ipg=12&_pgn=1" }
+		// $xml->paginationOutput
+		// $app_per_page=get_option( 'WD_ESP_APP_PER_PAGE' );
 		$gallery = '';
+		
+		// pagination
+		$pagination='';
+		if($xml->paginationOutput->totalPages > 1) {
+			$all = $xml->paginationOutput->totalPages;
+			$cur = $xml->paginationOutput->pageNumber;
+			$prev = ($cur>1?$cur-1:'');
+			$prev2 = ($cur>2?$cur-2:'');
+			$next = (($all-$cur)>1?$cur+1:'');
+			$next2 = (($all-$cur)>2?$cur+2:'');
+			$q=$_SERVER['QUERY_STRING']; // get page query 
+			$app_page_id=get_option( 'WD_ESP_APP_PAGE' );
+		
+			$page_query = site_url('?page_id='.$app_page_id).'brand='.$brand.'&size='.$sizes.'&price_min='.$price_min.'&price_max='.$price_max.'&rcat='.$cat;
+			
+			$pagination = '<div class="wd-esc-pagination">';
+				$pagination .= '<ul>'
+					.($prev?'<li><a href="'.$page_query.'&rpage='.$prev.'"> &laquo; </a></li>':' &laquo; ')
+					.($prev2?'<li><a href="'.$page_query.'&rpage='.$prev2.'">'.$prev2.'</a></li>':'')
+					.($prev?'<li><a href="'.$page_query.'&rpage='.$prev.'">'.$prev.'</a></li>':'')
+					.'<li class="current">'.$cur.'</li>'
+					.($next?'<li><a href="'.$page_query.'&rpage='.$next.'">'.$next.'</a></li>':'')
+					.($next2?'<li><a href="'.$page_query.'&rpage='.$next2.'">'.$next2.'</a></li>':'')
+					.($next?'<li><a href="'.$page_query.'&rpage='.$next.'"> &raquo; </a></li>':' &raquo; ')
+				.'</ul>';
+			$pagination .= '</div>';
+		}
 		
 		if($xml->searchResult->item) {
 			$gallery .= '<div class="gallery-grid clr" id="result-set">';
+			$gallery .= $pagination;
 			$gallery .= '<h2>'.$seller.($brand?' &raquo; Brand: '.$brand:'').'</h2>';
 			foreach($xml->searchResult->item as $item) {
 			    $gallery .= '<div data-item-id="'.$item->itemId.'" class="span3 item-cell">
@@ -242,6 +303,7 @@ class Ebay_app {
 			        </div> 
 			    </div>';
 			} 
+			$gallery .= $pagination;
 			$gallery .= '</div>';
 			echo $gallery;	
 		} else {
@@ -281,7 +343,7 @@ class Ebay_app {
 		); 
 		
 		// Get POST data
-		$posted=array(); if($_POST['filter']) $posted=$_POST;
+		$posted=array(); if(!empty($_POST['filter'])) $posted=$_POST;
 		
 		$search_form = '';
 		
@@ -289,9 +351,7 @@ class Ebay_app {
 		
 		// Output
 		$search_form .= '<form method="POST" action="?page_id='.$app_page_id.'">
-			<br><br>
-			<label>Enter search parameters</label>
-			<br><br>
+			<br>
 			<label>Brands</label>
 			<br><br>
 			<input type="text" name="brand" placeholder="Brands" '.(isset($posted['brand'])?' value="'.$posted['brand'].'" ':'').'/>
@@ -327,15 +387,20 @@ class Ebay_app {
 	}
 	
 	function getCats($parent_cat=-1) {
+		if(!$parent_cat) $parent_cat = -1; // doesn't work as a prop
+		
 		 // -1: top, 11450: Clothing, Shoes & Accessories, 1059: Men's Clothing, 
 		$endpoint = 'http://open.api.ebay.com/Shopping?callname=GetCategoryInfo&appid='.$this->app_ID.'&version=675&siteid=0&CategoryID='.$parent_cat.'&IncludeSelector=ChildCategories';
     	$responsexml = '';
 		if( ini_get('allow_url_fopen') ) {
-			$responsexml = file_get_contents($endpoint);
-			$xml = simplexml_load_string($responsexml);
-			// remove top from list
-			unset($xml->CategoryArray->Category[0]); 
-			return $xml->CategoryArray;
+			$responsexml = @file_get_contents($endpoint);
+			if($responsexml) {
+				$xml = simplexml_load_string($responsexml);
+				// remove top from list
+				unset($xml->CategoryArray->Category[0]); 
+				return $xml->CategoryArray;
+			}
+			return;
 		} else if(function_exists('curl_version')) {
 			$curl = curl_init(); 
 			if (is_resource($curl) === true) {
@@ -373,8 +438,8 @@ class Ebay_app {
 		}
 	}
 	
-	function setCats() {
-		$this->ebay_Cats = $this->getCats();
+	function setCats($parent='') {
+		$this->ebay_Cats = $this->getCats($parent);
 	}
 	
 	function setAppID($app_ID) { 
@@ -385,7 +450,8 @@ class Ebay_app {
 		if($app_ID==null)
 			die("App ID is required.");
 		$this->setAppID($app_ID);	
-		$this->setCats();
+		$parent_cat=get_option('WD_ESP_APP_CAT');
+		$this->setCats($parent_cat);
 	}
 
 }
